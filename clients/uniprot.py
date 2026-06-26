@@ -24,26 +24,17 @@ import logging
 
 import requests
 
+from bio_toolkit.config import EBI_ENDPOINTS, UNIPROT_KB_URL
 from bio_toolkit.util.retry import retry_on_failure
 
 logger = logging.getLogger(__name__)
 
-# UniProtKB entry as JSON.
-UNIPROT_BASE_URL = "https://rest.uniprot.org/uniprotkb/{}.json"
-
-# EBI Proteins / InterPro / AlphaFold endpoints (ported from settings.APIConfig).
-EBI_ENDPOINTS = {
-    "variation": "https://www.ebi.ac.uk/proteins/api/variation/{}?format=json",
-    "mutagenesis": "https://www.ebi.ac.uk/proteins/api/mutagenesis/{}?format=json",
-    "coordinates": "https://www.ebi.ac.uk/proteins/api/coordinates/{}?format=json",
-    "ptm": "https://www.ebi.ac.uk/proteins/api/proteomics/ptm/{}?format=json",
-    "hpp": "https://www.ebi.ac.uk/proteins/api/proteomics/hpp/{}?format=json",
-    "interpro": (
-        "https://www.ebi.ac.uk/interpro/api/entry/all/protein/uniprot/{}"
-        "?format=json&page_size=100&type=domain"
-    ),
-    "alphafold": "https://alphafold.ebi.ac.uk/files/AF-{}-F1-aa-substitutions.csv",
-}
+# Endpoint templates live in bio_toolkit.config (the canonical, one-place-to-repoint
+# home). Re-bound here under the names this module has always exported so callers
+# and tests keep working.
+UNIPROT_BASE_URL = UNIPROT_KB_URL  # UniProtKB entry as JSON.
+# EBI_ENDPOINTS is imported above (variation / mutagenesis / coordinates / ptm /
+# hpp / interpro / alphafold).
 
 TIMEOUT = 10
 

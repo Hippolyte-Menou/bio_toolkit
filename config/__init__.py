@@ -26,6 +26,25 @@ API_ENDPOINTS = {
     "zfin": "https://zfin.org",
 }
 
+# UniProtKB entry-as-JSON template (one accession -> its UniProtKB record).
+# Canonical home for the gene-note pipeline's protein endpoints (moved here from
+# the vault's gene-generation/settings.APIConfig); the uniprot client reads these.
+UNIPROT_KB_URL = "https://rest.uniprot.org/uniprotkb/{}.json"
+
+# EBI Proteins / InterPro / AlphaFold per-data-type endpoint templates.
+EBI_ENDPOINTS = {
+    "variation": "https://www.ebi.ac.uk/proteins/api/variation/{}?format=json",
+    "mutagenesis": "https://www.ebi.ac.uk/proteins/api/mutagenesis/{}?format=json",
+    "coordinates": "https://www.ebi.ac.uk/proteins/api/coordinates/{}?format=json",
+    "ptm": "https://www.ebi.ac.uk/proteins/api/proteomics/ptm/{}?format=json",
+    "hpp": "https://www.ebi.ac.uk/proteins/api/proteomics/hpp/{}?format=json",
+    "interpro": (
+        "https://www.ebi.ac.uk/interpro/api/entry/all/protein/uniprot/{}"
+        "?format=json&page_size=100&type=domain"
+    ),
+    "alphafold": "https://alphafold.ebi.ac.uk/files/AF-{}-F1-aa-substitutions.csv",
+}
+
 
 class MissingSecretError(RuntimeError):
     """Raised when a required secret is not configured."""
