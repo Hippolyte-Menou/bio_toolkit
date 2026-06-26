@@ -1,0 +1,27 @@
+[project]
+name = "bio-toolkit"
+version = "0.1.0"
+description = "Shared bio-API clients, reference data, PDF and utility code for the Genetics lab."
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31",
+    "pyyaml>=6.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Folder on disk is `tools/`; the importable package is `bio_toolkit`
+# (collision-safe — avoids a generic `import tools` shadowing across envs).
+[tool.setuptools]
+package-dir = { "bio_toolkit" = "." }
+packages = [
+    "bio_toolkit",
+    "bio_toolkit.clients",
+    "bio_toolkit.clients.hgmd",
+    "bio_toolkit.refdata",
+    "bio_toolkit.pdf",
+    "bio_toolkit.util",
+    "bio_toolkit.config",
+]
