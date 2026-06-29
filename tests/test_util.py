@@ -83,6 +83,21 @@ def test_gene_cache_env_override(monkeypatch, tmp_path):
 def test_default_dirs_resolve_by_name(monkeypatch):
     monkeypatch.delenv("GENE_CACHE_DIR", raising=False)
     monkeypatch.delenv("LITERATURE_DIR", raising=False)
+    monkeypatch.delenv("PDF_CORPUS_DIR", raising=False)
     monkeypatch.delenv("GENETICS_ROOT", raising=False)
     assert cache.gene_cache_dir().name == "gene-cache"
     assert cache.literature_dir().name == "literature"
+
+
+def test_pdf_corpus_is_pdfs_under_literature(monkeypatch):
+    monkeypatch.delenv("PDF_CORPUS_DIR", raising=False)
+    monkeypatch.delenv("LITERATURE_DIR", raising=False)
+    monkeypatch.delenv("GENETICS_ROOT", raising=False)
+    corpus = cache.pdf_corpus_dir()
+    assert corpus.name == "pdfs"
+    assert corpus.parent == cache.literature_dir()
+
+
+def test_pdf_corpus_env_override(monkeypatch, tmp_path):
+    monkeypatch.setenv("PDF_CORPUS_DIR", str(tmp_path))
+    assert cache.pdf_corpus_dir() == tmp_path

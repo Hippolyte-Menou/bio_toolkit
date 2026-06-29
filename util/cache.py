@@ -5,7 +5,7 @@ Resolvers for the shared, top-level, disease-blind substrate folders.
 They are OneDrive-synced and never git-tracked; clients write them, every project
 reads them. Locations are env-overridable (handy for tests and CI).
 
-    from bio_toolkit.util.cache import gene_cache_dir, literature_dir
+    from bio_toolkit.util.cache import gene_cache_dir, literature_dir, pdf_corpus_dir
 """
 
 import os
@@ -25,9 +25,26 @@ def _genetics_root() -> Path:
 
 
 def literature_dir() -> Path:
-    """Shared PDF corpus dir. Override with LITERATURE_DIR."""
+    """Shared literature base dir = the Zotero Linked Attachment Base Directory.
+
+    Override with LITERATURE_DIR. The actual PDF corpus lives one level down in
+    `pdf_corpus_dir()` (literature/pdfs/); this base also parents the vault's
+    converted-markdown tree and any future literature siblings.
+    """
     env = os.environ.get("LITERATURE_DIR")
     return Path(env) if env else _genetics_root() / "literature"
+
+
+def pdf_corpus_dir() -> Path:
+    """Shared PDF corpus dir (literature/pdfs/). Override with PDF_CORPUS_DIR.
+
+    This is where Zotero (via ZotMoov) parks the linked-attachment PDFs and where
+    the bot writes new downloads — one folder, citekey-named, every project reads.
+    Sits under literature_dir() so a single Zotero base directory covers both the
+    PDFs and the converted-markdown tree.
+    """
+    env = os.environ.get("PDF_CORPUS_DIR")
+    return Path(env) if env else literature_dir() / "pdfs"
 
 
 def gene_cache_dir() -> Path:
