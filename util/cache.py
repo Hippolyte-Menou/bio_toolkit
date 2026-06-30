@@ -1,9 +1,10 @@
 """
-Resolvers for the shared, top-level, disease-blind substrate folders.
+Resolvers for the shared, disease-blind substrate folders.
 
-`literature/` and `gene-cache/` are siblings of `lab/` under the Genetics root.
-They are OneDrive-synced and never git-tracked; clients write them, every project
-reads them. Locations are env-overridable (handy for tests and CI).
+`literature/` is a top-level sibling of `lab/` under the Genetics root; the
+gene-evidence cache lives at `lab/genes/`. All are OneDrive-synced and never
+git-tracked; clients write them, every project reads them. Locations are
+env-overridable (handy for tests and CI).
 
     from bio_toolkit.util.cache import gene_cache_dir, literature_dir, pdf_corpus_dir
 """
@@ -48,6 +49,6 @@ def pdf_corpus_dir() -> Path:
 
 
 def gene_cache_dir() -> Path:
-    """Shared disease-blind gene-evidence cache dir. Override with GENE_CACHE_DIR."""
+    """Shared disease-blind gene-evidence cache dir (lab/genes/). Override with GENE_CACHE_DIR."""
     env = os.environ.get("GENE_CACHE_DIR")
-    return Path(env) if env else _genetics_root() / "gene-cache"
+    return Path(env) if env else _genetics_root() / "lab" / "genes"

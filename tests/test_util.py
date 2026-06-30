@@ -85,7 +85,8 @@ def test_default_dirs_resolve_by_name(monkeypatch):
     monkeypatch.delenv("LITERATURE_DIR", raising=False)
     monkeypatch.delenv("PDF_CORPUS_DIR", raising=False)
     monkeypatch.delenv("GENETICS_ROOT", raising=False)
-    assert cache.gene_cache_dir().name == "gene-cache"
+    assert cache.gene_cache_dir().name == "genes"
+    assert cache.gene_cache_dir().parent.name == "lab"
     assert cache.literature_dir().name == "literature"
 
 
