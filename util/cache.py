@@ -52,3 +52,12 @@ def gene_cache_dir() -> Path:
     """Shared disease-blind gene-evidence cache dir (lab/genes/). Override with GENE_CACHE_DIR."""
     env = os.environ.get("GENE_CACHE_DIR")
     return Path(env) if env else _genetics_root() / "lab" / "genes"
+
+
+def gene_api_data_dir() -> Path:
+    """Raw API cache subtree (lab/genes/api_data/), grouped by source.
+
+    Writers compose gene_api_data_dir() / <source> / f"{GENE}.txt". Follows the
+    GENE_CACHE_DIR override so tests/CI relocate the whole cache in one place.
+    """
+    return gene_cache_dir() / "api_data"

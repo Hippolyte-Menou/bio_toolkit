@@ -102,3 +102,16 @@ def test_pdf_corpus_is_pdfs_under_literature(monkeypatch):
 def test_pdf_corpus_env_override(monkeypatch, tmp_path):
     monkeypatch.setenv("PDF_CORPUS_DIR", str(tmp_path))
     assert cache.pdf_corpus_dir() == tmp_path
+
+
+def test_gene_api_data_dir_default(monkeypatch):
+    monkeypatch.delenv("GENE_CACHE_DIR", raising=False)
+    monkeypatch.delenv("GENETICS_ROOT", raising=False)
+    d = cache.gene_api_data_dir()
+    assert d.name == "api_data"
+    assert d.parent.name == "genes"
+
+
+def test_gene_api_data_dir_follows_env_override(monkeypatch, tmp_path):
+    monkeypatch.setenv("GENE_CACHE_DIR", str(tmp_path))
+    assert cache.gene_api_data_dir() == tmp_path / "api_data"
