@@ -113,3 +113,37 @@ def test_fetch_hgnc_record_retries_then_succeeds(monkeypatch):
     record = hgnc.fetch_hgnc_record("PAX6")
     assert record["symbol"] == "PAX6"
     assert calls["n"] == 2
+
+
+import bio_toolkit.clients.hgnc as hgnc
+
+
+class _Resp:
+    def __init__(self, docs):
+        self._docs = docs
+        self.status_code = 200
+    def raise_for_status(self):
+        pass
+    def json(self):
+        return {"response": {"docs": self._docs}}
+
+
+def test_resolve_symbol_exact(monkeypatch):
+    monkeypatch.setattr(hgnc.requests, "get", lambda url, **k: _Resp([{"symbol": "DCN"}]))
+    assert hgnc.resolve_symbol("DCN") == "DCN"
+
+
+def test_resolve_symbol_via_search(monkeypatch):
+    def fake_get(url, **k):
+        if "/search/" in url:
+            return _Resp([{"symbol": "DCN", "score": 9.0}])
+        if url.rstrip("/").upper().endswith("/DCN"):
+            return _Resp([{"symbol": "DCN"}])
+        return _Resp([])                       # fetch/symbol/DECORIN -> empty
+    monkeypatch.setattr(hgnc.requests, "get", fake_get)
+    assert hgnc.resolve_symbol("decorin") == "DCN"
+
+
+def test_resolve_symbol_unknown(monkeypatch):
+    monkeypatch.setattr(hgnc.requests, "get", lambda url, **k: _Resp([]))
+    assert hgnc.resolve_symbol("notagene") is None
