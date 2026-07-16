@@ -69,3 +69,34 @@ def zotero_api_key() -> str:
         "Zotero API key not found. Set the ZOTERO_API_KEY environment variable, "
         "or create tools/config/zotero_api_key.secret (gitignored)."
     )
+
+
+# NCBI E-utilities credentials. Unlike the Zotero key these are OPTIONAL:
+# absent -> the anonymous 3 req/s tier still works, so the accessors return
+# None / a default rather than raising.
+NCBI_DEFAULT_EMAIL = "hippolytefrmenou@gmail.com"
+
+
+def ncbi_api_key() -> str | None:
+    """Return the NCBI E-utilities API key, or None if unconfigured.
+
+    Env `NCBI_API_KEY` first, then the gitignored `tools/config/ncbi_api_key.secret`.
+    Optional — a missing key just means the anonymous rate tier (3 req/s). Never
+    raises (contrast zotero_api_key, which is mandatory).
+    """
+    key = os.environ.get("NCBI_API_KEY")
+    if key:
+        return key
+    secret = Path(__file__).with_name("ncbi_api_key.secret")
+    if secret.exists():
+        return secret.read_text(encoding="utf-8-sig").strip()
+    return None
+
+
+def ncbi_email() -> str:
+    """Return the contact email for NCBI E-utilities etiquette.
+
+    Env `NCBI_EMAIL`, else the project's research contact. Not a secret — NCBI
+    asks for an email so it can warn before rate-limiting.
+    """
+    return os.environ.get("NCBI_EMAIL") or NCBI_DEFAULT_EMAIL

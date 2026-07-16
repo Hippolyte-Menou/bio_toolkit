@@ -28,3 +28,22 @@ def test_zotero_api_key_missing_raises(monkeypatch):
         pytest.skip("a local zotero_api_key.secret exists; raise-path not exercised")
     with pytest.raises(config.MissingSecretError):
         config.zotero_api_key()
+
+
+def test_ncbi_api_key_reads_env(monkeypatch):
+    from bio_toolkit import config
+    monkeypatch.setenv("NCBI_API_KEY", "abc123")
+    assert config.ncbi_api_key() == "abc123"
+
+
+def test_ncbi_api_key_absent_returns_none(monkeypatch):
+    from bio_toolkit import config
+    monkeypatch.delenv("NCBI_API_KEY", raising=False)
+    # No secret file in the test env -> optional key resolves to None, never raises.
+    assert config.ncbi_api_key() is None
+
+
+def test_ncbi_email_defaults_to_research_contact(monkeypatch):
+    from bio_toolkit import config
+    monkeypatch.delenv("NCBI_EMAIL", raising=False)
+    assert "@" in config.ncbi_email()
