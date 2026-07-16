@@ -204,3 +204,16 @@ def test_search_by_title_builds_year_window(monkeypatch):
     assert "title.search:Corneal dystrophy in DCN" in f
     assert "from_publication_date:2005-01-01" in f
     assert "to_publication_date:2005-12-31" in f
+
+
+def test_search_by_title_sanitizes_commas(monkeypatch):
+    client = OpenAlexClient()
+    captured = {}
+    def fake_get(endpoint, params=None):
+        captured["params"] = params
+        return {"results": [{"id": "W1"}]}
+    monkeypatch.setattr(client, "_get", fake_get)
+    client.search_by_title("Corneal dystrophy, recessive form", year=2005)
+    f = captured["params"]["filter"]
+    assert "title.search:Corneal dystrophy  recessive form" in f
+    assert "title.search:Corneal dystrophy, recessive" not in f

@@ -1091,7 +1091,8 @@ class OpenAlexClient:
         """
         if not title:
             return []
-        filters = [f"title.search:{title}", "is_retracted:false"]
+        safe_title = title.replace(",", " ").replace("|", " ")
+        filters = [f"title.search:{safe_title}", "is_retracted:false"]
         if year:
             filters.append(f"from_publication_date:{year}-01-01")
             filters.append(f"to_publication_date:{year}-12-31")
