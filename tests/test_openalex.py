@@ -170,3 +170,37 @@ def test_filter_by_mesh_keeps_empty_mesh():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+from bio_toolkit.clients.openalex import OpenAlexClient
+
+
+def test_fetch_works_by_ids_parses_and_filters(monkeypatch):
+    client = OpenAlexClient()
+    captured = {}
+
+    def fake_get(endpoint, params=None):
+        captured["params"] = params
+        return {"results": [{"id": "https://openalex.org/W1", "title": "T"}]}
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    works = client.fetch_works_by_ids(["https://openalex.org/W1", "W2"])
+    assert works[0]["title"] == "T"
+    assert "ids.openalex:W1|W2" in captured["params"]["filter"]
+
+
+def test_search_by_title_builds_year_window(monkeypatch):
+    client = OpenAlexClient()
+    captured = {}
+
+    def fake_get(endpoint, params=None):
+        captured["params"] = params
+        return {"results": [{"id": "W9"}]}
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    got = client.search_by_title("Corneal dystrophy in DCN", year=2005)
+    assert got and got[0]["id"] == "W9"
+    f = captured["params"]["filter"]
+    assert "title.search:Corneal dystrophy in DCN" in f
+    assert "from_publication_date:2005-01-01" in f
+    assert "to_publication_date:2005-12-31" in f

@@ -1049,6 +1049,63 @@ class OpenAlexClient:
         logger.info(f"Fetched {len(result)} works by DOI from OpenAlex")
         return result
 
+    def fetch_works_by_ids(self, openalex_ids: list[str]) -> list[dict]:
+        """Fetch full work metadata for a list of OpenAlex IDs.
+
+        Accepts bare ('W123…') or full-URL ('https://openalex.org/W123…') ids.
+        Companion to fetch_works_by_pmids/dois; needed to pull title/abstract for
+        referenced_works during the provenance chase (they often lack PMIDs).
+        """
+        result: list[dict] = []
+        batch_size = 50
+        for i in range(0, len(openalex_ids), batch_size):
+            batch = [x.rstrip("/").split("/")[-1] for x in openalex_ids[i:i + batch_size]]
+            id_filter = "|".join(batch)
+            page = 1
+            while True:
+                data = self._get(
+                    "/works",
+                    params={
+                        "filter": f"ids.openalex:{id_filter},is_retracted:false",
+                        "select": WORK_FIELDS,
+                        "per_page": "200",
+                        "page": str(page),
+                    },
+                )
+                if not data or "results" not in data:
+                    break
+                result.extend(data["results"])
+                if len(data["results"]) < 200:
+                    break
+                page += 1
+        logger.info(f"Fetched {len(result)} works by OpenAlex ID")
+        return result
+
+    def search_by_title(
+        self, title: str, year: int | None = None, max_results: int = 5,
+    ) -> list[dict]:
+        """Resolve a paper by title (optionally constrained to a publication year).
+
+        Uses OpenAlex title.search. Returns work dicts (same shape as the other
+        fetchers); the caller verifies the title similarity before trusting a hit.
+        """
+        if not title:
+            return []
+        filters = [f"title.search:{title}", "is_retracted:false"]
+        if year:
+            filters.append(f"from_publication_date:{year}-01-01")
+            filters.append(f"to_publication_date:{year}-12-31")
+        data = self._get(
+            "/works",
+            params={
+                "filter": ",".join(filters),
+                "select": WORK_FIELDS,
+                "per_page": str(max_results),
+                "page": "1",
+            },
+        )
+        return (data or {}).get("results", [])[:max_results]
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
