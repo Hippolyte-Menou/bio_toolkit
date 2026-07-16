@@ -29,6 +29,10 @@ _PMID_RE = re.compile(r"PMID:\s*(\d+)", re.IGNORECASE)
 _TYPE_TAG_MAP = {"review": "review", "editorial": "editorial",
                  "letter": "letter", "erratum": "erratum"}
 
+# Upper bound on pages for _all(). 2000 * 100 = 200k items, far above the
+# ~24k-item group library; guards against an endpoint that never short-pages.
+_ALL_MAX_PAGES = 2000
+
 
 @dataclass(frozen=True)
 class DedupBaseline:
@@ -77,15 +81,18 @@ class ZoteroWriter:
     # --- baseline -----------------------------------------------------------
 
     def _all(self, method, **kw) -> list[dict]:
-        """Paginate a listing endpoint (100/page)."""
+        """Paginate a listing endpoint (100/page), bounded by _ALL_MAX_PAGES."""
         out: list[dict] = []
         start = 0
-        while True:
+        for _ in range(_ALL_MAX_PAGES):
             page = method(limit=100, start=start, **kw)
             out.extend(page)
             if len(page) < 100:
                 break
             start += 100
+        else:
+            logger.warning("_all hit the %d-page cap; results truncated at %d items",
+                           _ALL_MAX_PAGES, len(out))
         return out
 
     def get_dedup_baseline(self, *, include_trashed: bool = True) -> DedupBaseline:
@@ -189,7 +196,8 @@ class ZoteroWriter:
                 "url": (f"https://pubmed.ncbi.nlm.nih.gov/{r['pmid']}/" if r.get("pmid") else ""),
                 "extra": (f"PMID: {r['pmid']}" if r.get("pmid") else ""),
                 "creators": [{"creatorType": "author", "firstName": a[0], "lastName": a[1]}
-                             for a in r.get("authors", []) if isinstance(a, tuple)],
+                             for a in r.get("authors", [])
+                             if isinstance(a, (tuple, list)) and len(a) >= 2],
                 "tags": uniq,
             }
             if collection_key:

@@ -43,8 +43,16 @@ def _base_params() -> dict[str, str]:
 
 
 @retry_on_failure(max_retries=2, base_delay=2.0)
+def _http_get_raw(url: str, params: dict) -> requests.Response:
+    # Return the response WITHOUT raising so retry_on_failure's status-code
+    # check retries 429/5xx with backoff. raise_for_status() (below) runs only
+    # after retries are exhausted — raising inside here would surface an
+    # HTTPError the decorator does not treat as retryable.
+    return requests.get(url, params=params, headers=_HEADERS, timeout=TIMEOUT)
+
+
 def _http_get(url: str, params: dict) -> requests.Response:
-    r = requests.get(url, params=params, headers=_HEADERS, timeout=TIMEOUT)
+    r = _http_get_raw(url, params)
     r.raise_for_status()
     return r
 
