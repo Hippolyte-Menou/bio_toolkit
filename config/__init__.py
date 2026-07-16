@@ -62,7 +62,9 @@ def zotero_api_key() -> str:
         return key
     secret = Path(__file__).with_name("zotero_api_key.secret")
     if secret.exists():
-        return secret.read_text(encoding="utf-8").strip()
+        # utf-8-sig so a BOM (Notepad/PowerShell Set-Content default) is stripped
+        # rather than surviving .strip() and corrupting the key.
+        return secret.read_text(encoding="utf-8-sig").strip()
     raise MissingSecretError(
         "Zotero API key not found. Set the ZOTERO_API_KEY environment variable, "
         "or create tools/config/zotero_api_key.secret (gitignored)."
