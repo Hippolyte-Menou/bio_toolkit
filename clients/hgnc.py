@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 # rest.genenames.org fetch endpoint — exact-match lookup on the approved symbol.
 HGNC_FETCH_URL = "https://rest.genenames.org/fetch/symbol/{symbol}"
+# rest.genenames.org search endpoint — fuzzy lookup across symbol/alias/prev/name.
+HGNC_SEARCH_URL = "https://rest.genenames.org/search/{query}"
 TIMEOUT = 10
 
 
@@ -105,3 +107,43 @@ def get_gene_aliases(symbol: str) -> set[str]:
 
     logger.info("HGNC aliases for %s: %s", symbol, aliases)
     return aliases
+
+
+@retry_on_failure(max_retries=3, base_delay=1.0)
+def _search(query: str) -> requests.Response:
+    """GET the HGNC search endpoint. Retries on transient failures."""
+    response = requests.get(
+        HGNC_SEARCH_URL.format(query=query),
+        headers={"Accept": "application/json"},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    return response
+
+
+def resolve_symbol(query: str) -> str | None:
+    """Resolve an arbitrary gene mention (approved symbol, alias, previous symbol,
+    or full name) to the APPROVED HGNC symbol. Returns None if unresolved.
+
+    Fast path: an exact fetch on the upper-cased query (already-approved symbols).
+    Fallback: the search endpoint, then a confirming fetch on the top hit so the
+    returned string is always an approved symbol.
+    """
+    if not query or not query.strip():
+        return None
+    q = query.strip()
+    rec = fetch_hgnc_record(q.upper())
+    if rec and rec.get("symbol"):
+        return rec["symbol"]
+    try:
+        resp = _search(q)
+    except requests.exceptions.RequestException:
+        return None
+    docs = resp.json().get("response", {}).get("docs", [])
+    if not docs:
+        return None
+    top = docs[0].get("symbol")
+    if not top:
+        return None
+    rec2 = fetch_hgnc_record(top)
+    return rec2["symbol"] if rec2 and rec2.get("symbol") else top

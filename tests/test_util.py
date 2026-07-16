@@ -115,3 +115,33 @@ def test_gene_api_data_dir_default(monkeypatch):
 def test_gene_api_data_dir_follows_env_override(monkeypatch, tmp_path):
     monkeypatch.setenv("GENE_CACHE_DIR", str(tmp_path))
     assert cache.gene_api_data_dir() == tmp_path / "api_data"
+
+
+# --- md/facts substrate resolvers ---
+
+import importlib
+
+
+def test_md_corpus_dir_default(monkeypatch):
+    monkeypatch.setenv("GENETICS_ROOT", "/tmp/genroot")
+    monkeypatch.delenv("LITERATURE_DIR", raising=False)
+    monkeypatch.delenv("MD_CORPUS_DIR", raising=False)
+    importlib.reload(cache)
+    assert cache.md_corpus_dir().as_posix().endswith("/tmp/genroot/literature/mds".lstrip("/")) \
+        or cache.md_corpus_dir().name == "mds"
+
+
+def test_facts_dir_and_db_path(monkeypatch):
+    monkeypatch.setenv("LITERATURE_DIR", "/tmp/lit")
+    monkeypatch.delenv("FACTS_DIR", raising=False)
+    importlib.reload(cache)
+    assert cache.facts_dir().name == "facts"
+    assert cache.facts_db_path().name == "facts.sqlite"
+    assert cache.facts_db_path().parent == cache.facts_dir()
+
+
+def test_facts_dir_env_override(monkeypatch):
+    monkeypatch.setenv("FACTS_DIR", "/tmp/custom_facts")
+    importlib.reload(cache)
+    assert cache.facts_dir().as_posix() == "/tmp/custom_facts"
+    assert cache.facts_db_path().as_posix() == "/tmp/custom_facts/facts.sqlite"

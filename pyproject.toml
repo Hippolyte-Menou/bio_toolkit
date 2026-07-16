@@ -25,6 +25,7 @@ packages = [
     "bio_toolkit.clients.hgmd",
     "bio_toolkit.refdata",
     "bio_toolkit.pdf",
+    "bio_toolkit.facts",
     "bio_toolkit.util",
     "bio_toolkit.config",
 ]

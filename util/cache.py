@@ -61,3 +61,29 @@ def gene_api_data_dir() -> Path:
     GENE_CACHE_DIR override so tests/CI relocate the whole cache in one place.
     """
     return gene_cache_dir() / "api_data"
+
+
+def md_corpus_dir() -> Path:
+    """Converted-markdown corpus dir (literature/mds/). Override with MD_CORPUS_DIR.
+
+    Sibling of pdf_corpus_dir() under literature_dir(); Stage A writes it, the
+    extractor subagents read it.
+    """
+    env = os.environ.get("MD_CORPUS_DIR")
+    return Path(env) if env else literature_dir() / "mds"
+
+
+def facts_dir() -> Path:
+    """The literature-facts project + data dir (literature/facts/). Override with FACTS_DIR.
+
+    Root of the self-contained project git repo; also holds the sqlite data file
+    (gitignored within it). Sibling of pdfs/ and mds/.
+    """
+    env = os.environ.get("FACTS_DIR")
+    return Path(env) if env else literature_dir() / "facts"
+
+
+def facts_db_path() -> Path:
+    """The SQLite fact/claim store (literature/facts/facts.sqlite). Override with FACTS_DB_PATH."""
+    env = os.environ.get("FACTS_DB_PATH")
+    return Path(env) if env else facts_dir() / "facts.sqlite"
