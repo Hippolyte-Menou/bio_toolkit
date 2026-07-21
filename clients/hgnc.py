@@ -126,8 +126,10 @@ def resolve_symbol(query: str) -> str | None:
     or full name) to the APPROVED HGNC symbol. Returns None if unresolved.
 
     Fast path: an exact fetch on the upper-cased query (already-approved symbols).
-    Fallback: the search endpoint, then a confirming fetch on the top hit so the
-    returned string is always an approved symbol.
+    Fallback: the search endpoint, accepting the top hit ONLY when the query
+    exactly matches that gene's approved symbol, full name, alias, or previous
+    symbol (a precision guard — HGNC search fuzzy-matches ANY string, so a
+    multi-word non-gene phrase would otherwise map to a spurious symbol).
     """
     if not query or not query.strip():
         return None
@@ -146,4 +148,13 @@ def resolve_symbol(query: str) -> str | None:
     if not top:
         return None
     rec2 = fetch_hgnc_record(top)
-    return rec2["symbol"] if rec2 and rec2.get("symbol") else top
+    if not rec2 or not rec2.get("symbol"):
+        return None
+    # Precision guard: only accept the fuzzy search hit when the query is a real
+    # name of the matched gene (approved symbol, full name, alias, or previous
+    # symbol). Without this, a non-gene phrase like "visual pigment" resolves to a
+    # spurious symbol (observed: -> GPDS1), polluting the store.
+    names = {rec2["symbol"].upper(), (rec2.get("name") or "").upper()}
+    names.update(a.upper() for a in rec2.get("alias_symbol", []))
+    names.update(p.upper() for p in rec2.get("prev_symbol", []))
+    return rec2["symbol"] if q.upper() in names else None

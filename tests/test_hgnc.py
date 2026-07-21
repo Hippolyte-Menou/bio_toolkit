@@ -138,10 +138,23 @@ def test_resolve_symbol_via_search(monkeypatch):
         if "/search/" in url:
             return _Resp([{"symbol": "DCN", "score": 9.0}])
         if url.rstrip("/").upper().endswith("/DCN"):
-            return _Resp([{"symbol": "DCN"}])
+            return _Resp([{"symbol": "DCN", "name": "decorin"}])   # 'decorin' is DCN's full name
         return _Resp([])                       # fetch/symbol/DECORIN -> empty
     monkeypatch.setattr(hgnc.requests, "get", fake_get)
     assert hgnc.resolve_symbol("decorin") == "DCN"
+
+
+def test_resolve_symbol_rejects_fuzzy_phrase(monkeypatch):
+    # HGNC search fuzzy-matches any string; a non-gene phrase must NOT resolve to
+    # whatever symbol the search happens to surface (observed real-world: GPDS1).
+    def fake_get(url, **k):
+        if "/search/" in url:
+            return _Resp([{"symbol": "GPDS1", "score": 3.0}])
+        if url.rstrip("/").upper().endswith("/GPDS1"):
+            return _Resp([{"symbol": "GPDS1", "name": "glaucoma primary open angle"}])
+        return _Resp([])                       # exact fetch on the phrase -> empty
+    monkeypatch.setattr(hgnc.requests, "get", fake_get)
+    assert hgnc.resolve_symbol("visual pigment") is None
 
 
 def test_resolve_symbol_unknown(monkeypatch):
